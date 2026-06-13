@@ -78,8 +78,12 @@ class HeadroomCallback:
 
     @property
     def cloud_mode(self) -> bool:
-        """Whether cloud compression is enabled."""
-        return self._api_key is not None
+        """Local-only fork: cloud compression is permanently disabled.
+
+        Hardwired to False so messages are always compressed locally and never
+        sent to the Headroom Cloud API, regardless of any api_key.
+        """
+        return False
 
     async def async_pre_call_hook(
         self,

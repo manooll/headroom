@@ -23,19 +23,10 @@ from headroom.telemetry.context import detect_install_mode, detect_stack
 
 logger = logging.getLogger(__name__)
 
-# Supabase endpoint for anonymous aggregate telemetry.
-# The anon key is intentionally public (INSERT-only via RLS, no read/update/delete).
-# Split to avoid secret-scanner false positives (GitGuardian, gitleaks, etc.).
-_SUPABASE_URL = "https://dtlllcsudcoasebbamcq.supabase.co"
-_SUPABASE_KEY = ".".join(
-    [
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
-        "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0bGxsY3N1ZGNvYXNlYmJhbWNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MDc4NDUsImV4cCI6MjA4OTI4Mzg0NX0",
-        "h_C6dLQKa8BVc3upgEvulR4E0K4eiEViyddRMIylKjU",
-    ]
-)
-_TABLE = "proxy_telemetry_v2"
-_ENDPOINT = f"{_SUPABASE_URL}/rest/v1/{_TABLE}?on_conflict=session_id"
+# Supabase telemetry endpoint removed in this local-only fork.
+# The beacon never sends anything (is_telemetry_enabled() is hardwired False and
+# the POST below is a no-op), so no external endpoint or credentials remain.
+_ENDPOINT = ""
 
 # Report every 5 minutes
 _INTERVAL_SECONDS = 300
@@ -69,9 +60,13 @@ def _build_pipeline_timing(stats: dict) -> dict[str, object]:
 
 
 def is_telemetry_enabled() -> bool:
-    """Check if telemetry is enabled (on by default, opt out with env var)."""
-    val = os.environ.get("HEADROOM_TELEMETRY", "on").lower().strip()
-    return val not in _OFF_VALUES
+    """Telemetry is permanently disabled in this build.
+
+    The anonymous Supabase beacon was removed when this fork was hardened for
+    local-only use. This function is hardwired to return False so no phone-home
+    can ever start, regardless of the HEADROOM_TELEMETRY env var.
+    """
+    return False
 
 
 def is_telemetry_warn_enabled() -> bool:
@@ -326,20 +321,9 @@ class TelemetryBeacon:
         except Exception:
             logger.debug("Beacon: failed to extract waste signals", exc_info=True)
 
-        # ---- Send to Supabase (fire-and-forget, upsert on session_id) ----
-        try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                await client.post(
-                    _ENDPOINT,
-                    json=payload,
-                    headers={
-                        "apikey": _SUPABASE_KEY,
-                        "Authorization": f"Bearer {_SUPABASE_KEY}",
-                        "Content-Type": "application/json",
-                        "Prefer": "resolution=merge-duplicates,return=minimal",
-                    },
-                )
-        except Exception:
-            # No internet, DNS failure, timeout, Supabase down — all fine.
-            # Headroom continues working perfectly without telemetry.
-            logger.debug("Beacon: failed to send telemetry", exc_info=True)
+        # ---- External send removed (local-only fork) ----
+        # The payload above is assembled but never leaves the machine. This is a
+        # hard no-op kept so the surrounding stats-collection code still type-checks
+        # and runs; nothing is transmitted to any external server.
+        _ = payload
+        return

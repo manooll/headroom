@@ -265,7 +265,18 @@ def start_detached_agent(profile: str) -> subprocess.Popen[str]:
 
 
 def start_persistent_docker(manifest: DeploymentManifest) -> None:
-    """Start a persistent Docker container with restart policy."""
+    """Start a persistent Docker container with restart policy.
+
+    Local-only fork: disabled. This build will not launch a persistent,
+    auto-restarting Docker container. Run the proxy directly or start a
+    container yourself without `--restart` if you want a one-off.
+    """
+    import click
+
+    raise click.ClickException(
+        "Persistent Docker deployment is disabled in this build. "
+        "Run `headroom proxy --port 8787` directly instead."
+    )
 
     command = build_runtime_command(manifest)
     docker_cmd = [

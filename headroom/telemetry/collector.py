@@ -744,19 +744,18 @@ def get_telemetry_collector(
     if _telemetry_collector is None:
         with _collector_lock:
             if _telemetry_collector is None:
-                # Honour HEADROOM_TELEMETRY (the documented opt-out var,
-                # also used by the Supabase beacon at telemetry/beacon.py).
-                # Pre-#390 this only checked HEADROOM_TELEMETRY_DISABLED,
-                # so users who set HEADROOM_TELEMETRY=off (the value in
-                # the docs) still saw /v1/telemetry report enabled=true.
-                # HEADROOM_TELEMETRY_DISABLED stays accepted for back-compat.
-                from headroom.telemetry.beacon import is_telemetry_enabled
-
+                # Local-only fork: this collector is PURELY LOCAL — it does no
+                # network I/O and never leaves the machine. It powers the local
+                # /stats and /v1/telemetry endpoints. The Supabase beacon that
+                # used to ship this data has been removed, so the collector is
+                # decoupled from `is_telemetry_enabled()` (which now only gates
+                # the dead beacon). It stays ON by default and is turned off
+                # only by the explicit legacy opt-out HEADROOM_TELEMETRY_DISABLED.
                 disabled_legacy = os.environ.get("HEADROOM_TELEMETRY_DISABLED", "").lower() in (
                     "1",
                     "true",
                 )
-                if disabled_legacy or not is_telemetry_enabled():
+                if disabled_legacy:
                     config = config or TelemetryConfig()
                     config.enabled = False
 

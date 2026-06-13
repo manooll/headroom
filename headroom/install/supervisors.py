@@ -167,7 +167,21 @@ def _linux_task_spec(manifest: DeploymentManifest, ensure_script: Path) -> tuple
 
 
 def install_supervisor(manifest: DeploymentManifest) -> list[ArtifactRecord]:
-    """Install service/task artifacts for the deployment."""
+    """Install service/task artifacts for the deployment.
+
+    Local-only fork: installing a *persistent* OS-level supervisor (systemd
+    unit, cron job, launchd plist, or Windows service/scheduled task) is
+    disabled. Headroom will not register any background daemon. The teardown
+    paths (stop/remove_supervisor) are kept intact so any previously-installed
+    supervisor can still be removed.
+    """
+
+    if manifest.supervisor_kind != SupervisorKind.NONE.value:
+        raise click.ClickException(
+            "Persistent service/task installation is disabled in this build. "
+            "Headroom will not install a launchd/systemd/cron/Windows service. "
+            "Run the proxy directly instead (e.g. `headroom proxy --port 8787`)."
+        )
 
     records = render_runner_scripts(manifest)
     artifact_paths = {Path(item.path).name: Path(item.path) for item in records}

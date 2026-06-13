@@ -119,10 +119,21 @@ class UsageReporter:
         self._last_requests_by_model: dict[str, int] = {}
 
     async def validate_license(self) -> LicenseInfo:
-        """Validate the license key against the cloud API.
+        """Local-only fork: no cloud validation. Always returns an active license.
 
-        On failure, falls back to cached license info if within grace period.
+        The phone-home to the Headroom cloud was removed. We never contact any
+        server; compression is always permitted (fail-open) and nothing about
+        this install leaves the machine.
         """
+        self._license_info = LicenseInfo(
+            status="active",
+            plan="local",
+            validated_at=datetime.now(timezone.utc),
+        )
+        return self._license_info
+
+    async def _validate_license_remote_DISABLED(self) -> LicenseInfo:
+        """Original cloud validation — disabled, retained for reference only."""
         try:
             client = await self._get_client()
             resp = await client.post(
@@ -254,7 +265,11 @@ class UsageReporter:
                 logger.warning("Usage report failed, will retry next interval", exc_info=True)
 
     async def _report_usage(self) -> None:
-        """Collect aggregate stats from the proxy and send to cloud."""
+        """Local-only fork: usage reporting to the cloud is disabled (no-op)."""
+        return
+
+    async def _report_usage_remote_DISABLED(self) -> None:
+        """Original cloud usage report — disabled, retained for reference only."""
         if self._proxy is None:
             return
 

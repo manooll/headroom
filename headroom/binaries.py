@@ -216,8 +216,16 @@ def _mirror_url(url: str) -> str:
 
 
 def _download(url: str, dest: Path, *, progress: bool = True) -> None:
+    # Local-only fork: network downloads are OFF by default. Optional third-party
+    # tools (difft, scc) are only fetched if the operator explicitly opts in with
+    # HEADROOM_BINARIES_ALLOW_DOWNLOAD. HEADROOM_BINARIES_OFFLINE still forces off.
     if os.environ.get("HEADROOM_BINARIES_OFFLINE"):
         raise OfflineError(f"offline mode (HEADROOM_BINARIES_OFFLINE=1) but fetch required: {url}")
+    if not os.environ.get("HEADROOM_BINARIES_ALLOW_DOWNLOAD"):
+        raise OfflineError(
+            "network downloads disabled in this build (set "
+            f"HEADROOM_BINARIES_ALLOW_DOWNLOAD=1 to allow): {url}"
+        )
     dest.parent.mkdir(parents=True, exist_ok=True)
     final_url = _mirror_url(url)
     req = urllib.request.Request(final_url, headers={"User-Agent": "headroom-binaries/1"})
