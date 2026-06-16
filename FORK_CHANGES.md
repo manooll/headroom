@@ -66,3 +66,15 @@ they never leave the machine.
 grep -rn "supabase.co\|headroomlabs.ai" headroom --include="*.py"   # only dead/disabled refs
 # Run the proxy and confirm the log says: "Anonymous telemetry: DISABLED"
 ```
+
+## Local integrations on this machine (how the proxy is actually wired)
+
+These docs record the live, reversible wiring of the local-only proxy in front
+of real agents — read them before changing or refreshing a setup:
+
+- **[CLAUDE_CODE_INTEGRATION.md](CLAUDE_CODE_INTEGRATION.md)** — Claude Code
+  (subscription/OAuth) → local proxy on `:8787` in `cache` mode, via launchd
+  `com.headroom.proxy` + `ANTHROPIC_BASE_URL`. Includes the Python-3.12 / editable
+  `.pth` / `[proxy]` extras gotchas and the update-from-git procedure.
+- **[HERMES_INTEGRATION.md](HERMES_INTEGRATION.md)** — Hermes / OpenRouter agent
+  → local proxy, with the `OPENROUTER_BASE_URL` routing lever.

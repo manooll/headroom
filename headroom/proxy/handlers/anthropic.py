@@ -1299,6 +1299,13 @@ class AnthropicHandlerMixin:
                         )
                 except Exception:  # advisory hint only — must never fail a request
                     pass
+            # Fail-closed defaults: set here so the proactive-expansion block
+            # below (which is outside the CCR-inject gate) can reference them
+            # safely even when _bypass=True or both inject flags are off.
+            # Matches what _resolve_ccr_workspace() returns for an unresolvable
+            # workspace (see its docstring and the 2026-05-26 leak-report note).
+            ccr_workspace_key: str = ""
+            ccr_workspace_label: str | None = None
             if (
                 self.config.ccr_inject_tool or self.config.ccr_inject_system_instructions
             ) and not _bypass:
